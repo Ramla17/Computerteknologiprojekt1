@@ -100,6 +100,9 @@ class Obstacle():
         global victim_counter
         victim_counter = 0
         collision_radius = 0.05
+        Avg_Lin_Speed = 0
+        Speed_Updates = 0
+        Speed_Accumulation = 0
 
         # Function to quit the program
         def quit_program():
@@ -111,6 +114,7 @@ class Obstacle():
             print("_______________________________")
             print("Obstacles hit:", obstacle_counter)
             print("Victims detected:", victim_counter)
+            print("Average speed: ", Avg_Lin_Speed)
             time.sleep(2)
             print("quitting..")
             sys.exit()
@@ -143,7 +147,7 @@ class Obstacle():
                 twist.angular.z = ANGULAR_VEL
                 self._cmd_pub.publish(twist)
                 print("Obstacle in front - very close")
-                in_front_close += 1
+                
                 
             
             # Obstacle to the left 
@@ -155,7 +159,7 @@ class Obstacle():
                     twist.angular.z =  - ANGULAR_VEL 
                     self._cmd_pub.publish(twist)
                     print("Obstacle on the left - very close")
-                    right_close += 1
+                    
             
                 else:
                     # Obstacle is less close - do a light turn
@@ -163,7 +167,7 @@ class Obstacle():
                     twist.angular.z = - ANGULAR_VEL * 0.5
                     self._cmd_pub.publish(twist)
                     print("Obstacle on the left - less close")
-                    right += 1
+                    
             
             # Obstacle to the right
             elif min(lidar_distances[140:180]) < SAFE_STOP_DISTANCE:
@@ -173,7 +177,7 @@ class Obstacle():
                     twist.angular.z =  ANGULAR_VEL 
                     self._cmd_pub.publish(twist)
                     print("Obstacle on the right - very close")
-                    left_close += 1
+                    
             
                 else:
                     # Obstacle is less close - do a light turn
@@ -181,7 +185,7 @@ class Obstacle():
                     twist.angular.z = ANGULAR_VEL * 0.5
                     self._cmd_pub.publish(twist)
                     print("Obstacle on the right - less close")
-                    left += 1
+                    
                     
             else:
                 # Move foward
@@ -191,6 +195,13 @@ class Obstacle():
                 turtlebot_moving = True
                 rospy.loginfo('Distance of the obstacle : %f', min_distance)
             
+            
+           # Updates speed calculations if the robot is moving
+            if twist.linear.x != 0:
+                Speed_Updates += 1
+                Speed_Accumulation += twist.linear.x
+                Avg_Lin_Speed = Speed_Accumulation / Speed_Updates
+                
             # collision counter
             if (min_distance < collision_radius):
                 if(time.time() - start_time_victim >= 10.0):
